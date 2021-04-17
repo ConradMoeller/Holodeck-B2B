@@ -4,9 +4,12 @@ import java.io.ByteArrayOutputStream;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
+import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.holodeckb2b.common.messagemodel.MessageUnit;
 import org.holodeckb2b.common.pmode.PMode;
@@ -16,7 +19,9 @@ import org.holodeckb2b.interfaces.general.IAgreement;
 import org.holodeckb2b.interfaces.general.IPartyId;
 import org.holodeckb2b.interfaces.pmode.ITradingPartnerConfiguration;
 import org.holodeckb2b.interfaces.processingmodel.IMessageUnitProcessingState;
+import org.holodeckb2b.ui.api.CertType;
 import org.holodeckb2b.ui.api.CoreInfo;
+import org.holodeckb2b.webui.application.certificates.CertificateBean;
 import org.holodeckb2b.webui.application.messagehistory.MessageBean;
 import org.holodeckb2b.webui.application.messagehistory.MessageDetailBean;
 import org.holodeckb2b.webui.application.pmodes.PModeBean;
@@ -99,6 +104,34 @@ public class Controller {
 					.build());
 		}
 		return result;
+	}
+
+	public static List<CertificateBean> retrieveCertificates() throws Exception {
+		connect();
+		ArrayList<CertificateBean> result = new ArrayList<CertificateBean>();
+		Map<String, X509Certificate> certs = coreAPI.getCertificates(CertType.Trusted);
+		addCertificates(result, certs, CertType.Trusted);
+		certs = coreAPI.getCertificates(CertType.Partner);
+		addCertificates(result, certs, CertType.Partner);
+		certs = coreAPI.getCertificates(CertType.Private);
+		addCertificates(result, certs, CertType.Private);
+		return result;
+	}
+
+	private static void addCertificates(ArrayList<CertificateBean> result, Map<String, X509Certificate> certs,
+			CertType type) {
+		if (certs == null) {
+			return;
+		}
+		Set<String> keySet = certs.keySet();
+		for (String key : keySet) {
+			X509Certificate x509cert = certs.get(key);
+			result.add(new CertificateBean.Builder() //
+					.setId(key) //
+					.setType(type.name()) //
+					.setCertificate(x509cert) //
+					.build());
+		}
 	}
 
 	private static String getAgreement(PMode p) {
