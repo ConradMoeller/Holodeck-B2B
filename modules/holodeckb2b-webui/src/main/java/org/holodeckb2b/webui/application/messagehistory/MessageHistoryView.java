@@ -33,7 +33,7 @@ public class MessageHistoryView extends HorizontalLayout {
 
 		Grid<MessageBean> grid = new Grid(MessageBean.class, true);
 		grid.setItems(new ArrayList<MessageBean>());
-		grid.setColumns("id", "timeStamp", "currentState", "messageUnitType", "direction", "refMessageId", "pmode");
+		grid.setColumns("timeStamp", "currentState", "messageUnitType", "direction", "id", "refMessageId", "pmode");
 		add(grid);
 
 		Label label = new Label("messages after (UTC)");

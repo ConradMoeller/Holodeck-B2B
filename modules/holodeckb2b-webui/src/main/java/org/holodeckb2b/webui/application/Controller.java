@@ -42,7 +42,7 @@ public class Controller {
 			result.add(new MessageBean.Builder().setId(log.getMessageId()) //
 					.setTimestamp(log.getTimestamp().toString()) //
 					.setMessageUnitName(MessageUnitUtils.getMessageUnitName(log)) //
-					.setCurrentState(log.getCurrentProcessingState().getDescription()) //
+					.setCurrentState(log.getCurrentProcessingState().getState().name()) //
 					.setDirection(log.getDirection().name()) //
 					.setRefMessageId(log.getRefToMessageId()) //
 					.setPmode(log.getPModeId()) //
