@@ -5,7 +5,6 @@ import java.util.Optional;
 import org.holodeckb2b.webui.application.about.AboutView;
 import org.holodeckb2b.webui.application.certificates.CertificatesView;
 import org.holodeckb2b.webui.application.messagehistory.MessageHistoryView;
-import org.holodeckb2b.webui.application.messagestatus.MessageStatusView;
 import org.holodeckb2b.webui.application.pmodes.PModesView;
 
 import com.vaadin.flow.component.Component;
@@ -86,8 +85,8 @@ public class MainView extends AppLayout {
 
 	private Component[] createMenuItems() {
 		return new Tab[] { createTab("Message History", MessageHistoryView.class),
-				createTab("Message Status", MessageStatusView.class), createTab("P-Modes", PModesView.class),
-				createTab("Certificates", CertificatesView.class), createTab("About", AboutView.class) };
+				createTab("P-Modes", PModesView.class), createTab("Certificates", CertificatesView.class),
+				createTab("About", AboutView.class) };
 	}
 
 	private static Tab createTab(String text, Class<? extends Component> navigationTarget) {

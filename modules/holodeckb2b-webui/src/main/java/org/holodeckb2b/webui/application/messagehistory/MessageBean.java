@@ -78,13 +78,13 @@ public class MessageBean {
 			m = new MessageBean();
 		}
 
+		public MessageBean build() {
+			return m;
+		}
+
 		public Builder setId(String id) {
 			m.id = id;
 			return this;
-		}
-
-		public MessageBean build() {
-			return m;
 		}
 
 		public Builder setTimestamp(String timeString) {

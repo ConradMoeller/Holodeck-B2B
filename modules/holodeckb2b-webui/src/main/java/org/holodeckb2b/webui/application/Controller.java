@@ -1,5 +1,6 @@
 package org.holodeckb2b.webui.application;
 
+import java.io.ByteArrayOutputStream;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
@@ -8,9 +9,17 @@ import java.util.Date;
 import java.util.List;
 
 import org.holodeckb2b.common.messagemodel.MessageUnit;
+import org.holodeckb2b.common.pmode.PMode;
 import org.holodeckb2b.common.util.MessageUnitUtils;
+import org.holodeckb2b.common.util.Utils;
+import org.holodeckb2b.interfaces.general.IAgreement;
+import org.holodeckb2b.interfaces.general.IPartyId;
+import org.holodeckb2b.interfaces.pmode.ITradingPartnerConfiguration;
+import org.holodeckb2b.interfaces.processingmodel.IMessageUnitProcessingState;
 import org.holodeckb2b.ui.api.CoreInfo;
 import org.holodeckb2b.webui.application.messagehistory.MessageBean;
+import org.holodeckb2b.webui.application.messagehistory.MessageDetailBean;
+import org.holodeckb2b.webui.application.pmodes.PModeBean;
 
 public class Controller {
 
@@ -39,7 +48,8 @@ public class Controller {
 		}
 		for (int i = 0; i < messageUnitLog.length; i++) {
 			MessageUnit log = messageUnitLog[i];
-			result.add(new MessageBean.Builder().setId(log.getMessageId()) //
+			result.add(new MessageBean.Builder() //
+					.setId(log.getMessageId()) //
 					.setTimestamp(log.getTimestamp().toString()) //
 					.setMessageUnitName(MessageUnitUtils.getMessageUnitName(log)) //
 					.setCurrentState(log.getCurrentProcessingState().getState().name()) //
@@ -49,6 +59,74 @@ public class Controller {
 					.build());
 		}
 		return result;
+	}
+
+	public static List<MessageDetailBean> retrieveMessageDetail(String messageId) throws Exception {
+		connect();
+		ArrayList<MessageDetailBean> result = new ArrayList<MessageDetailBean>();
+		MessageUnit[] messageUnitInfo = coreAPI.getMessageUnitInfo(messageId);
+		if (messageUnitInfo == null) {
+			return result;
+		}
+
+		MessageUnit info = messageUnitInfo[0];
+		List<IMessageUnitProcessingState> states = info.getProcessingStates();
+		for (IMessageUnitProcessingState state : states) {
+			result.add(new MessageDetailBean.Builder() //
+					.setTimestamp(state.getStartTime().toString()) //
+					.setState(state.getState().name()) //
+					.build());
+		}
+		return result;
+	}
+
+	public static List<PModeBean> retrievePModes() throws Exception {
+		connect();
+		ArrayList<PModeBean> result = new ArrayList<PModeBean>();
+		PMode[] pModes = coreAPI.getPModes();
+		if (pModes == null) {
+			return result;
+		}
+		for (int i = 0; i < pModes.length; i++) {
+			PMode p = pModes[i];
+			result.add(new PModeBean.Builder() //
+					.setId(p.getId()) //
+					.setAgreement(getAgreement(p)) //
+					.setMep(p.getMepBinding()) //
+					.setParty1(getParty(p.getInitiator())) //
+					.setParty2(getParty(p.getResponder())) //
+					.setXML(getXml(p)) //
+					.build());
+		}
+		return result;
+	}
+
+	private static String getAgreement(PMode p) {
+		IAgreement a = p.getAgreement();
+		if (a == null || Utils.isNullOrEmpty(a.getName())) {
+			return "";
+		} else {
+			return (!Utils.isNullOrEmpty(a.getType()) ? a.getType() + "::" : "") + a.getName();
+		}
+	}
+
+	private static String getParty(ITradingPartnerConfiguration p) {
+		if (p == null || Utils.isNullOrEmpty(p.getPartyIds()))
+			return "";
+		else {
+			IPartyId pid = p.getPartyIds().iterator().next();
+			return (!Utils.isNullOrEmpty(pid.getType()) ? pid.getType() + "::" : "") + pid.getId();
+		}
+	}
+
+	private static String getXml(PMode p) {
+		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		try {
+			p.writeAsXMLTo(baos);
+		} catch (Exception e) {
+			return e.getMessage();
+		}
+		return baos.toString();
 	}
 
 }
