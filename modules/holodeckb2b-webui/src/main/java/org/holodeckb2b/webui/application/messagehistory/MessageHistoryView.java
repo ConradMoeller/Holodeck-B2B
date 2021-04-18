@@ -1,12 +1,15 @@
 package org.holodeckb2b.webui.application.messagehistory;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 import org.holodeckb2b.webui.application.Controller;
+import org.holodeckb2b.webui.application.UIUtil;
 import org.holodeckb2b.webui.application.main.MainView;
 
 import com.vaadin.flow.component.button.Button;
@@ -15,8 +18,6 @@ import com.vaadin.flow.component.datetimepicker.DateTimePicker;
 import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Label;
-import com.vaadin.flow.component.notification.Notification;
-import com.vaadin.flow.component.notification.Notification.Position;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.PageTitle;
@@ -36,9 +37,10 @@ public class MessageHistoryView extends HorizontalLayout {
 		grid.setPageSize(5);
 		grid.setItems(new ArrayList<MessageBean>());
 		grid.setColumns("timeStamp", "currentState", "messageUnitType", "direction", "id", "refMessageId", "pmode");
-		Label label = new Label("messages after (UTC)");
+		Label label = new Label("messages before (UTC)");
 		DateTimePicker time = new DateTimePicker();
-		time.setValue(LocalDateTime.now());
+		time.setLocale(Locale.UK);
+		time.setValue(LocalDateTime.now(ZoneId.of("Z")));
 		ComboBox<Integer> size = new ComboBox<Integer>();
 		size.setItems(10, 25, 50);
 		size.setValue(10);
@@ -61,10 +63,12 @@ public class MessageHistoryView extends HorizontalLayout {
 						.retrieveMessageHistory(Date.from(time.getValue().toInstant(ZoneOffset.UTC)), size.getValue());
 				grid.setItems(list);
 				if (list.isEmpty()) {
-					Notification.show("no messages found", 5000, Position.MIDDLE);
+					UIUtil.notify("no messages found");
 				}
+				txt.setValue("");
+				details.setItems(new ArrayList<MessageDetailBean>());
 			} catch (Exception e) {
-				Notification.show(e.getMessage(), 5000, Position.MIDDLE);
+				UIUtil.notify(e.getMessage());
 			}
 		});
 		show.addClickListener(l -> {
@@ -90,10 +94,10 @@ public class MessageHistoryView extends HorizontalLayout {
 			detail = Controller.retrieveMessageDetail(id);
 			details.setItems(detail);
 			if (detail.isEmpty()) {
-				Notification.show("message not found", 5000, Position.MIDDLE);
+				UIUtil.notify("message not found");
 			}
 		} catch (Exception e) {
-			Notification.show(e.getMessage(), 5000, Position.MIDDLE);
+			UIUtil.notify(e.getMessage());
 		}
 	}
 

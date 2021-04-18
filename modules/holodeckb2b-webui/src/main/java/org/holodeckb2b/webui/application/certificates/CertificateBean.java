@@ -6,6 +6,8 @@ public class CertificateBean {
 
 	private String id;
 	private String type;
+	private String from;
+	private String to;
 	private X509Certificate certificate;
 
 	public CertificateBean() {
@@ -28,6 +30,22 @@ public class CertificateBean {
 		this.type = type;
 	}
 
+	public void setValidFrom(String from) {
+		this.from = from;
+	}
+
+	public String getValidFrom() {
+		return from;
+	}
+
+	public void setValidTo(String to) {
+		this.to = to;
+	}
+
+	public String getValidTo() {
+		return to;
+	}
+
 	public X509Certificate getCertificate() {
 		return certificate;
 	}
@@ -38,14 +56,6 @@ public class CertificateBean {
 
 	public String getSerial() {
 		return certificate.getSerialNumber().toString();
-	}
-
-	public String getValidFrom() {
-		return certificate.getNotBefore().toString();
-	}
-
-	public String getValidTo() {
-		return certificate.getNotAfter().toString();
 	}
 
 	public String getSubject() {
@@ -75,6 +85,16 @@ public class CertificateBean {
 
 		public Builder setType(String type) {
 			c.setType(type);
+			return this;
+		}
+
+		public Builder setValidFrom(String from) {
+			c.setValidFrom(from);
+			return this;
+		}
+
+		public Builder setValidTo(String to) {
+			c.setValidTo(to);
 			return this;
 		}
 

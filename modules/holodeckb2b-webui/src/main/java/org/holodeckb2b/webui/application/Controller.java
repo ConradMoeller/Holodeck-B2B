@@ -5,11 +5,13 @@ import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.security.cert.X509Certificate;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TimeZone;
 
 import org.holodeckb2b.common.messagemodel.MessageUnit;
 import org.holodeckb2b.common.pmode.PMode;
@@ -30,6 +32,11 @@ public class Controller {
 
 	private static CoreInfo coreAPI;
 	private static String hb2bHostName = "";
+	private static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
+
+	static {
+		sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+	}
 
 	public static void connect() throws Exception {
 		try {
@@ -44,6 +51,10 @@ public class Controller {
 		return hb2bHostName;
 	}
 
+	public static String formatDateTime(Date d) {
+		return sdf.format(d);
+	}
+
 	public static List<MessageBean> retrieveMessageHistory(Date upto, int max) throws Exception {
 		connect();
 		ArrayList<MessageBean> result = new ArrayList<MessageBean>();
@@ -55,7 +66,7 @@ public class Controller {
 			MessageUnit log = messageUnitLog[i];
 			result.add(new MessageBean.Builder() //
 					.setId(log.getMessageId()) //
-					.setTimestamp(log.getTimestamp().toString()) //
+					.setTimestamp(sdf.format(log.getTimestamp())) //
 					.setMessageUnitName(MessageUnitUtils.getMessageUnitName(log)) //
 					.setCurrentState(log.getCurrentProcessingState().getState().name()) //
 					.setDirection(log.getDirection().name()) //
@@ -78,7 +89,7 @@ public class Controller {
 		List<IMessageUnitProcessingState> states = info.getProcessingStates();
 		for (IMessageUnitProcessingState state : states) {
 			result.add(new MessageDetailBean.Builder() //
-					.setTimestamp(state.getStartTime().toString()) //
+					.setTimestamp(sdf.format(state.getStartTime())) //
 					.setState(state.getState().name()) //
 					.build());
 		}
@@ -129,6 +140,8 @@ public class Controller {
 			result.add(new CertificateBean.Builder() //
 					.setId(key) //
 					.setType(type.name()) //
+					.setValidFrom(formatDateTime(x509cert.getNotBefore())) //
+					.setValidTo(formatDateTime(x509cert.getNotAfter())) //
 					.setCertificate(x509cert) //
 					.build());
 		}
