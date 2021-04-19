@@ -99,6 +99,7 @@
         <module>modules/holodeckb2b-distribution</module>
         <module>modules/holodeckb2b-it</module>
         <module>modules/holodeckb2b-ui</module>
+        <module>modules/holodeckb2b-webui</module>
   </modules>
 
     <licenses>

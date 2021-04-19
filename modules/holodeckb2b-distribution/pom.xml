@@ -68,6 +68,11 @@
             <artifactId>holodeckb2b-ui</artifactId>
         </dependency>
         <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>holodeckb2b-webui</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
             <groupId>org.holodeckb2b.extensions</groupId>
 			<artifactId>file-backend</artifactId>
 			<version>1.0.1</version>
