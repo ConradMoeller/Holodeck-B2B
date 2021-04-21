@@ -32,98 +32,113 @@ import org.holodeckb2b.core.config.InternalConfiguration;
  * Is the Java application to start the Holodeck B2B Server.
  * 
  * @author Sander Fieten (sander at holodeck-b2b.org)
- * @since  5.0.0
+ * @since 5.0.0
  */
 public class HolodeckB2BServer extends AxisServer {
 
 	private static final Logger log = LogManager.getLogger(HolodeckB2BServer.class);
-	
+
 	private static final String A_HOME = "-home";
-	
+
 	/**
 	 * The server configuration read from the <code>holodeckb2b.xml</code> file
 	 */
-	private final  InternalConfiguration	serverConfig;
-	
+	private final InternalConfiguration serverConfig;
+
 	/**
 	 * Creates a new server instance and initialises the configuration context.
 	 * 
-	 * @param hb2bHome		path to the Holodeck B2B home directory
-	 * @throws AxisFault	when there is a problem in initialising the configuration
+	 * @param hb2bHome path to the Holodeck B2B home directory
+	 * @throws AxisFault when there is a problem in initialising the configuration
 	 */
-    public HolodeckB2BServer(final String hb2bHome) throws AxisFault {
-        super(false);
-        final HB2BAxis2Configurator configurator = new HB2BAxis2Configurator(hb2bHome);
-        configContext = ConfigurationContextFactory.createConfigurationContext(configurator);
-        serverConfig = (InternalConfiguration) configurator.getAxisConfig();
-    }
+	public HolodeckB2BServer(final String hb2bHome) throws AxisFault {
+		super(false);
+		final HB2BAxis2Configurator configurator = new HB2BAxis2Configurator(hb2bHome);
+		configContext = ConfigurationContextFactory.createConfigurationContext(configurator);
+		serverConfig = (InternalConfiguration) configurator.getAxisConfig();
+	}
 
-    /**
-     * Main script to start the Holodeck B2B server.
-     *  
-     * @param args			command line args     
-     */
-    public static void main(String[] args) {
-        
-    	if (args.length == 0) {
-    		log.fatal("Missing required argument \"{}\" defining Holodeck B2B's root directory", A_HOME);
-    		printUsage();
-    	}
-    	String hb2bHome = null;
-    	for(int i = 0; i < args.length - 1 && hb2bHome == null; i++) 
-    		if (A_HOME.equalsIgnoreCase(args[i]))
-    			hb2bHome = args[i+1];
-    	
-    	if (hb2bHome == null) {
-    		log.fatal("No value specified for argument \"{}\" defining Holodeck B2B's root directory", A_HOME);
-    		printUsage();    		
-    	}
-        
-        log.info("Starting the server");
-        System.out.println("[HolodeckB2BServer] Starting server");
-        HolodeckB2BServer server = null;
-        try {
-            server = new HolodeckB2BServer(hb2bHome);
-            server.start();            
-        } catch (Throwable t) {
-            log.fatal("Error during startup of the server: {}", Utils.getExceptionTrace(t));
-            System.err.println("[HolodeckB2BServer] Aborted startup due to error. See log for details.");
-            System.exit(-1);
-        }
+	/**
+	 * Starts the Server
+	 * 
+	 * @return true if the server is started or false if the is a problem to start
+	 *         the server
+	 */
+	public boolean startServer() {
+		log.info("Starting the server");
+		try {
+			start();
+		} catch (Throwable t) {
+			log.fatal("Error during startup of the server: {}", Utils.getExceptionTrace(t));
+			return false;
+		}
+		// Check if all modules and services have correctly started
+		final Hashtable<String, String> faultyModules = serverConfig.getFaultyModules();
+		final Hashtable<String, String> faultyServices = serverConfig.getFaultyServices();
+		if (!Utils.isNullOrEmpty(faultyModules) || !Utils.isNullOrEmpty(faultyServices)) {
+			final StringBuilder logMsg = new StringBuilder();
+			logMsg.append("Holodeck B2B cannot be started because one or more modules or services failed to start!");
+			if (!Utils.isNullOrEmpty(faultyModules)) {
+				logMsg.append("\tList of modules that failed to start:");
+				for (Entry<String, String> fm : faultyModules.entrySet())
+					logMsg.append("\t\t").append(fm.getKey()).append(" - ").append(fm.getValue()).append('\n');
+			}
+			if (!Utils.isNullOrEmpty(faultyServices)) {
+				logMsg.append("\tList of services that failed to start:");
+				for (Entry<String, String> fs : faultyServices.entrySet())
+					logMsg.append("\t\t").append(fs.getKey()).append(" - ").append(fs.getValue()).append('\n');
+			}
+			log.fatal(logMsg.toString());
+			return false;
+		}
+		log.info("Server started successfully");
+		return true;
+	}
 
-        // Check if all modules and services have correctly started
-        if (server != null) {
-        	final Hashtable<String,String> faultyModules = server.serverConfig.getFaultyModules();
-        	final Hashtable<String,String> faultyServices = server.serverConfig.getFaultyServices();        	
-        	if (!Utils.isNullOrEmpty(faultyModules) || !Utils.isNullOrEmpty(faultyServices)) {
-        		final StringBuilder logMsg = new StringBuilder();
-        		logMsg.append("Holodeck B2B cannot be started because one or more modules or services failed to start!");
-        		if (!Utils.isNullOrEmpty(faultyModules)) {
-        			  logMsg.append("\tList of modules that failed to start:");
-        			  for(Entry<String, String> fm : faultyModules.entrySet())
-        				  logMsg.append("\t\t").append(fm.getKey()).append(" - ").append(fm.getValue()).append('\n');
-        		}
-        		if (!Utils.isNullOrEmpty(faultyServices)) {
-        			logMsg.append("\tList of services that failed to start:");
-        			for(Entry<String, String> fs : faultyServices.entrySet())
-        				logMsg.append("\t\t").append(fs.getKey()).append(" - ").append(fs.getValue()).append('\n');
-        		}
-        		log.fatal(logMsg.toString());
-                System.err.println("[HolodeckB2BServer] Aborted startup due to error. See log for details.");
-                System.exit(-1);        			
-        	}
-        } 
-        
-        log.info("Server started successfully");
-        System.out.println("[HolodeckB2BServer] Started server");        
-    }
+	/**
+	 * Main script to start the Holodeck B2B server.
+	 * 
+	 * @param args command line args
+	 */
+	public static void main(String[] args) {
 
-    /**
-     * Prints a simple "usage" instruction.
-     */
-    public static void printUsage() {
-        System.out.println("Usage: HolodeckB2B -home <HB2B root directory>");
-        System.out.println();
-        System.exit(-1);
-    }	
+		if (args.length == 0) {
+			log.fatal("Missing required argument \"{}\" defining Holodeck B2B's root directory", A_HOME);
+			printUsage();
+		}
+		String hb2bHome = null;
+		for (int i = 0; i < args.length - 1 && hb2bHome == null; i++)
+			if (A_HOME.equalsIgnoreCase(args[i]))
+				hb2bHome = args[i + 1];
+
+		if (hb2bHome == null) {
+			log.fatal("No value specified for argument \"{}\" defining Holodeck B2B's root directory", A_HOME);
+			printUsage();
+		}
+
+		System.out.println("[HolodeckB2BServer] Starting server");
+		HolodeckB2BServer server = null;
+		try {
+			server = new HolodeckB2BServer(hb2bHome);
+		} catch (AxisFault e) {
+			log.fatal("Error during startup of the server: {}", Utils.getExceptionTrace(e));
+			System.err.println("[HolodeckB2BServer] Aborted startup due to error. See log for details.");
+			System.exit(-1);
+		}
+		if (server.startServer()) {
+			System.out.println("[HolodeckB2BServer] Started server");
+		} else {
+			System.err.println("[HolodeckB2BServer] Aborted startup due to error. See log for details.");
+			System.exit(-1);
+		}
+	}
+
+	/**
+	 * Prints a simple "usage" instruction.
+	 */
+	public static void printUsage() {
+		System.out.println("Usage: HolodeckB2B -home <HB2B root directory>");
+		System.out.println();
+		System.exit(-1);
+	}
 }
