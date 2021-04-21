@@ -2,10 +2,14 @@ rem Install Script
 if "%1"=="" goto help
 if "%2"=="" goto help
 if "%3"=="" goto help
+
+if "%1"=="rm" goto uninstallAs4
+
 goto installAS4
 
 :help
 echo  Usage: installService.bat holodeckb2bhome javahome servicename
+echo  Usage: installService.bat rm holodeckb2bhome servicename
 goto end
 
 :installAS4
@@ -43,6 +47,10 @@ holodeckb2b.exe //IS//%SERVICE_NAME% ^
 goto end
 
 :uninstallAS4
+rem remove as4 service
+set AXIS2_HOME=%2
+set SERVICE_NAME=%3
+
 cd %AXIS2_HOME%\bin
 holodeckb2b.exe //DS//%SERVICE_NAME%
 
