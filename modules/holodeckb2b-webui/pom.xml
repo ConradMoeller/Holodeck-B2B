@@ -113,12 +113,8 @@
 					<groupId>com.vaadin</groupId>
 					<artifactId>vaadin-core</artifactId>
 				</exclusion>
-				<!--
-				<exclusion>
-					<groupId>org.springframework.boot</groupId>
-					<artifactId>spring-boot-starter-web</artifactId>
-				</exclusion>
-				-->
+				<!-- <exclusion> <groupId>org.springframework.boot</groupId> <artifactId>spring-boot-starter-web</artifactId> 
+					</exclusion> -->
 			</exclusions>
 		</dependency>
 		<dependency>
@@ -150,12 +146,25 @@
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
+				<version>2.4.1</version>
+				<executions>
+					<execution>
+						<goals>
+							<goal>repackage</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<!--
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
 				<configuration>
 					<wait>500</wait>
 					<maxAttempts>240</maxAttempts>
 				</configuration>
 			</plugin>
-
+			-->
 			<!-- Takes care of synchronizing java dependencies and imports in package.json 
 				and main.js files. It also creates webpack.config.js if does not exist yet. -->
 			<plugin>
