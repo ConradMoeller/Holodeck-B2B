@@ -87,7 +87,7 @@
 		<file>
 			<source>../holodeckb2b-webui/target/holodeckb2b-webui-${project.version}.jar
 			</source>
-			<outputDirectory>lib</outputDirectory>
+			<outputDirectory>webui</outputDirectory>
 			<destName>holodeckb2b-webui.jar</destName>
 		</file>
 	</files>
