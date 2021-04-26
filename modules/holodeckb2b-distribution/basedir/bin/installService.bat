@@ -19,6 +19,7 @@ set JAVA_HOME=%2
 set SERVICE_NAME=%3
 
 set AXIS2_CLASS_PATH=%AXIS2_HOME%;%AXIS2_HOME%\conf;%JAVA_HOME%\lib\tools.jar;%AXIS2_HOME%\lib\*
+set JVM=%JAVA_HOME%\jre\bin\server\jvm.dll
 
 cd %AXIS2_HOME%\bin
 holodeckb2b.exe //IS//%SERVICE_NAME% ^
