@@ -17,4 +17,4 @@
 
 cd "$HB2B_HOME"
 
-exec "$JAVA_HOME/bin/java" -jar ./webui/holodeckb2b-webui.jar --server.port=8088
+$JAVA_HOME/bin/java" -jar ./webui/holodeckb2b-webui.jar --server.port=8088
