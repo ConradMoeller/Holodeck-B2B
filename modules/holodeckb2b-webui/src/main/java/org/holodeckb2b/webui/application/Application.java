@@ -1,9 +1,11 @@
 package org.holodeckb2b.webui.application;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.Arrays;
 
 import org.springframework.boot.ExitCodeGenerator;
 import org.springframework.boot.SpringApplication;
@@ -74,11 +76,21 @@ public class Application extends SpringBootServletInitializer {
 
 			try {
 				System.out.println("Holodeck B2B Web-UI listen for stop signal.");
-				Socket s = server.accept();
-				System.out.println("Received signal to stop Holodeck B2B Web-UI.");
-				s.getInputStream();
-				s.close();
-				stop();
+				while(true) {
+					Socket s = server.accept();
+					InputStream is = s.getInputStream();
+					byte[] b = new byte[4];
+					int bytes = is.read(b);
+					if (bytes == 4 && b[0] == 1 && b[1] == 2 && b[2] == 3 && b[3] == 4) {
+						System.out.println("Received signal to stop Holodeck B2B Web-UI.");
+						s.close();
+						stop();
+						return;
+					} else {
+						System.out.println("Invalid signal to stop Holodeck B2B Web-UI.");
+						s.close();					
+					}
+				}
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
