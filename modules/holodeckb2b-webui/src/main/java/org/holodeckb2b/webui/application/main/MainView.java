@@ -40,23 +40,11 @@ public class MainView extends AppLayout {
 	private Tabs menu;
 	private H1 viewTitle;
 
-	private boolean tokenCheckPassed = true;
-
 	public MainView() {
-		String token = VaadinServletService.getCurrentServletRequest().getParameter("token");
-		String tokenValue = System.getProperty("hb2b.webui.token");
-		if (token == null || tokenValue == null || !token.equals(tokenValue)) {
-			try {
-				VaadinServletService.getCurrentResponse().sendError(403);
-				tokenCheckPassed = false;
-			} catch (IOException e) {
-			}
-		} else {
-			setPrimarySection(Section.DRAWER);
-			addToNavbar(true, createHeaderContent());
-			menu = createMenu();
-			addToDrawer(createDrawerContent(menu));
-		}
+		setPrimarySection(Section.DRAWER);
+		addToNavbar(true, createHeaderContent());
+		menu = createMenu();
+		addToDrawer(createDrawerContent(menu));
 	}
 
 	private Component createHeaderContent() {
@@ -113,11 +101,9 @@ public class MainView extends AppLayout {
 
 	@Override
 	protected void afterNavigation() {
-		if (tokenCheckPassed) {
-			super.afterNavigation();
-			getTabForComponent(getContent()).ifPresent(menu::setSelectedTab);
-			viewTitle.setText(getCurrentPageTitle());
-		}
+		super.afterNavigation();
+		getTabForComponent(getContent()).ifPresent(menu::setSelectedTab);
+		viewTitle.setText(getCurrentPageTitle());
 	}
 
 	private Optional<Tab> getTabForComponent(Component component) {
