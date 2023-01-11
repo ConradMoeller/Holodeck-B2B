@@ -44,7 +44,7 @@ public class AuthFilter implements Filter {
 			throws IOException, ServletException {
 
 		String tokenValue = System.getProperty("hb2b.webui.token");
-		if (tokenValue == null) {
+		if (tokenValue != null) {
 			new TokenHandler().authorize(request, response, chain);
 		} else {
 			new BasicHandler().authorize(request, response, chain);
