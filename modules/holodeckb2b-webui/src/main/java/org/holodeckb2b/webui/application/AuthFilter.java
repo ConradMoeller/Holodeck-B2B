@@ -18,6 +18,7 @@ package org.holodeckb2b.webui.application;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Optional;
 import java.util.Properties;
 
 import javax.servlet.Filter;
@@ -29,6 +30,9 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.holodeckb2b.webui.application.rest.api.users.User;
+import org.holodeckb2b.webui.application.rest.api.users.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
@@ -39,15 +43,39 @@ import com.helger.commons.io.resource.ClassPathResource;
 @Order(1)
 public class AuthFilter implements Filter {
 
+	@Autowired
+	private UserRepository userRepo;
+
+	private static boolean existsCookie(ServletRequest request) {
+		Cookie[] cookies = ((HttpServletRequest) request).getCookies();
+		if (cookies != null) {
+			for (Cookie cookie : cookies) {
+				if (cookie.getName().equals("HB2BToken")) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	private static void setCookie(ServletResponse response) {
+		((HttpServletResponse) response).addCookie(new Cookie("HB2BToken", "42"));
+	}
+
 	@Override
 	public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
 			throws IOException, ServletException {
+
+		if (((HttpServletRequest) request).getServletPath().contains("api")) {
+			chain.doFilter(request, response);
+			return;
+		}
 
 		String tokenValue = System.getProperty("hb2b.webui.token");
 		if (tokenValue != null) {
 			new TokenHandler().authorize(request, response, chain);
 		} else {
-			new BasicHandler().authorize(request, response, chain);
+			new BasicHandler(userRepo).authorize(request, response, chain);
 		}
 	}
 
@@ -56,16 +84,11 @@ public class AuthFilter implements Filter {
 		public void authorize(ServletRequest request, ServletResponse response, FilterChain chain)
 				throws IOException, ServletException {
 
-			Cookie[] cookies = ((HttpServletRequest) request).getCookies();
-			if (cookies != null) {
-				for (Cookie cookie : cookies) {
-					if (cookie.getName().equals("HB2BToken")) {
-						chain.doFilter(request, response);
-						return;
-					}
-				}
+			if (AuthFilter.existsCookie(request)) {
+				chain.doFilter(request, response);
+				return;
 			}
-			String tokenValue = System.getProperty("hb2b.webui.token");
+			String tokenValue = Settings.getSecurityToken();
 			String token = request.getParameter("token");
 			if (token == null || tokenValue == null || !token.equals(tokenValue)) {
 				try {
@@ -74,7 +97,7 @@ public class AuthFilter implements Filter {
 				} catch (IOException e) {
 				}
 			} else {
-				((HttpServletResponse) response).addCookie(new Cookie("HB2BToken", "42"));
+				AuthFilter.setCookie(response);
 			}
 			chain.doFilter(request, response);
 		}
@@ -82,21 +105,29 @@ public class AuthFilter implements Filter {
 
 	public class BasicHandler {
 
+		private UserRepository userRepo;
+
+		public BasicHandler(UserRepository userRepo) {
+			this.userRepo = userRepo;
+		}
+
 		public void authorize(ServletRequest request, ServletResponse response, FilterChain chain)
 				throws IOException, ServletException {
 
+			if (AuthFilter.existsCookie(request)) {
+				chain.doFilter(request, response);
+				return;
+			}
 			String auth = ((HttpServletRequest) request).getHeader("Authorization");
 			if (auth == null) {
 				((HttpServletResponse) response).addHeader("WWW-Authenticate", "Basic realm=\"HolodeckB2B\"");
 				((HttpServletResponse) response).sendError(401);
 				return;
 			} else {
-				InputStream resource = new ClassPathResource("/user.dat").getInputStream();
-				Properties users = new Properties();
-				users.load(resource);
 				String[] pair = new String(Base64.decode(auth.replaceAll("Basic", "").trim())).split(":");
-				String pass = users.getProperty(pair[0]);
-				if (pass.equals(pair[1])) {
+				Optional<User> user = userRepo.findById(pair[0]);
+				if (user.isPresent() && TOTPTool.getTOTPCode(user.get().getSecret()).equals(pair[1])) {
+					AuthFilter.setCookie(response);
 					chain.doFilter(request, response);
 				} else {
 					((HttpServletResponse) response).addHeader("WWW-Authenticate", "Basic realm=\"HolodeckB2B\"");
